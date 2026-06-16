@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Standard Properties — Portfolio Pro-Forma (Interactive)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --pine:#1f3d2f; --pine-2:#2e5a43; --pine-deep:#16291f;
+    --mint:#46c79a; --mint-soft:#79ddbb;
+    --cream:#f6f1e7; --paper:#ffffff; --ink:#15201a; --muted:#5d6b62;
+    --line:rgba(31,61,47,.14); --pos:#1d7a4d; --neg:#c0392b; --warn:#b8852a;
+    --shadow:0 14px 40px -20px rgba(22,41,31,.45);
+    --head:"Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --body:"Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--body);background:var(--cream);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3{font-family:var(--head);margin:0;letter-spacing:-.01em;}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 22px;}
+
+  /* header */
+  header{background:linear-gradient(135deg,var(--pine),var(--pine-deep));color:var(--cream);padding:22px 0 24px;}
+  .hbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .mark{width:38px;height:38px;border-radius:10px;background:var(--mint);color:var(--pine-deep);display:grid;place-items:center;font-family:var(--head);font-weight:700;font-size:1.15rem;}
+  .brand .t{font-family:var(--head);font-weight:600;font-size:1.12rem;}
+  .brand .t small{display:block;font-weight:500;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mint-soft);}
+  .conf{font-family:var(--head);font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+        border:1px solid rgba(246,241,231,.4);border-radius:999px;padding:5px 12px;color:var(--mint-soft);}
+  .asof{margin-top:6px;font-size:.82rem;color:rgba(246,241,231,.7);}
+
+  /* controls */
+  .controls{background:var(--pine-deep);color:var(--cream);padding:16px 0;position:sticky;top:0;z-index:30;border-bottom:1px solid rgba(121,221,187,.2);}
+  .ctrl-inner{display:flex;align-items:center;gap:30px;flex-wrap:wrap;}
+  .ctrl{display:flex;flex-direction:column;gap:4px;min-width:190px;}
+  .ctrl label{font-size:.72rem;letter-spacing:.04em;color:var(--mint-soft);font-family:var(--head);font-weight:500;}
+  .ctrl .row{display:flex;align-items:center;gap:10px;}
+  .ctrl input[type=range]{flex:1;accent-color:var(--mint);}
+  .ctrl .val{font-family:var(--head);font-weight:600;font-size:.95rem;min-width:48px;text-align:right;}
+  .btn{background:var(--mint);color:var(--pine-deep);border:none;border-radius:9px;padding:9px 15px;font-family:var(--head);font-weight:600;font-size:.82rem;cursor:pointer;transition:filter .2s;}
+  .btn:hover{filter:brightness(1.06);}
+  .btn.ghost{background:transparent;color:var(--mint-soft);border:1px solid rgba(121,221,187,.4);}
+
+  /* summary cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:26px 0 8px;}
+  @media(max-width:820px){.cards{grid-template-columns:1fr;}}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:var(--shadow);}
+  .card.combined{background:linear-gradient(135deg,#22432f,#16291f);color:var(--cream);border:none;}
+  .card h3{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--pine-2);font-weight:600;}
+  .card.combined h3{color:var(--mint-soft);}
+  .card .sub{font-size:.74rem;color:var(--muted);margin-top:2px;}
+  .card.combined .sub{color:rgba(246,241,231,.6);}
+  .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin-top:16px;}
+  .k .n{font-family:var(--head);font-weight:700;font-size:1.4rem;line-height:1;}
+  .k .l{font-size:.72rem;color:var(--muted);margin-top:3px;}
+  .card.combined .k .l{color:rgba(246,241,231,.65);}
+  .pos{color:var(--pos);} .neg{color:var(--neg);}
+  .card.combined .pos{color:var(--mint-soft);} .card.combined .neg{color:#ffb4a8;}
+
+  /* section title */
+  .sect{margin:34px 0 12px;display:flex;align-items:baseline;gap:12px;}
+  .sect h2{font-size:1.25rem;font-weight:600;color:var(--pine);}
+  .sect span{font-size:.84rem;color:var(--muted);}
+
+  /* table */
+  .tbl-wrap{background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);}
+  table{width:100%;border-collapse:collapse;font-size:.86rem;}
+  thead th{background:var(--pine);color:var(--cream);font-family:var(--head);font-weight:500;font-size:.74rem;letter-spacing:.03em;
+           padding:11px 10px;text-align:right;white-space:nowrap;}
+  thead th:first-child{text-align:left;}
+  tbody td{padding:10px;border-top:1px solid var(--line);text-align:right;white-space:nowrap;}
+  tbody td:first-child{text-align:left;}
+  .prow{cursor:pointer;}
+  .prow:hover{background:#faf7f0;}
+  .pname{font-weight:600;display:flex;align-items:center;gap:8px;}
+  .pname .caret{color:var(--mint);font-size:.7rem;transition:transform .2s;display:inline-block;}
+  .prow.open .caret{transform:rotate(90deg);}
+  .pnote{font-size:.7rem;color:var(--muted);font-weight:400;display:block;margin-top:1px;}
+  .new-badge{background:var(--mint);color:var(--pine-deep);font-family:var(--head);font-weight:600;font-size:.6rem;letter-spacing:.05em;padding:2px 6px;border-radius:5px;text-transform:uppercase;}
+  tbody td input{width:80px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-family:var(--body);font-size:.84rem;background:#fffdf8;}
+  tbody td input:focus{outline:2px solid var(--mint);border-color:var(--mint);}
+  .trow{font-weight:700;background:#eef4ee;}
+  .trow td{border-top:2px solid var(--pine-2);}
+  td.dscr-bad{color:var(--neg);font-weight:600;} td.dscr-ok{color:var(--pos);font-weight:600;}
+
+  /* unit detail */
+  .units-row td{padding:0;background:#fbf9f3;}
+  .units-inner{padding:12px 16px 16px 34px;}
+  .units-inner .uh{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:var(--head);}
+  .unit{display:grid;grid-template-columns:24px 1fr 110px;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line);}
+  .unit:last-child{border-bottom:none;}
+  .unit .tn{font-size:.84rem;}
+  .unit.vac .tn{color:var(--neg);}
+  .unit input[type=number]{width:90px;text-align:right;border:1px solid var(--line);border-radius:6px;padding:4px 7px;font-size:.82rem;background:#fff;}
+  .unit input[type=checkbox]{width:17px;height:17px;accent-color:var(--mint);cursor:pointer;}
+
+  .legend{margin:14px 2px 40px;font-size:.78rem;color:var(--muted);display:flex;gap:20px;flex-wrap:wrap;}
+  .legend b{color:var(--pine);}
+  footer{padding:30px 0 50px;color:var(--muted);font-size:.78rem;}
+  .editable-hint{display:inline-block;width:9px;height:9px;border-radius:2px;background:#fffdf8;border:1px solid var(--line);vertical-align:middle;margin-right:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hbar">
+    <div class="brand">
+      <span class="mark">S</span>
+      <span class="t">Standard Properties LLC<small>Portfolio Pro-Forma</small></span>
+    </div>
+    <div style="text-align:right;">
+      <span class="conf">Internal &middot; Confidential</span>
+      <div class="asof">Income approach &middot; live what-if model &middot; based on AppFolio rent roll + QBO TTM actuals (2026-06-03)</div>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap ctrl-inner">
+    <div class="ctrl">
+      <label>Cap rate (value = NOI ÷ cap)</label>
+      <div class="row"><input id="cap" type="range" min="0.05" max="0.10" step="0.0025" value="0.08"/><span class="val" id="capV">8.00%</span></div>
+    </div>
+    <div class="ctrl">
+      <label>Vacancy &amp; credit loss (on occupied rent)</label>
+      <div class="row"><input id="vac" type="range" min="0" max="0.15" step="0.005" value="0.03"/><span class="val" id="vacV">3.0%</span></div>
+    </div>
+    <button class="btn" id="reset">Reset to baseline</button>
+    <button class="btn ghost" id="toggleAll">Expand all units</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cards">
+    <div class="card" id="card-sp">
+      <h3>SP Stabilized</h3><div class="sub" id="sp-sub">owned &amp; operating today</div>
+      <div class="kgrid">
+        <div class="k"><div class="n" id="sp-noi"></div><div class="l">NOI / yr</div></div>
+        <div class="k"><div class="n" id="sp-cfbt"></div><div class="l">Cash flow / yr</div></div>
+        <div class="k"><div class="n" id="sp-cfmo"></div><div class="l">Cash flow / mo</div></div>
+        <div class="k"><div class="n" id="sp-dscr"></div><div class="l">DSCR</div></div>
+        <div class="k"><div class="n" id="sp-val"></div><div class="l">Value @ cap</div></div>
+        <div class="k"><div class="n" id="sp-eq"></div><div class="l">Equity (PFS)</div></div>
+      </div>
+    </div>
+    <div class="card" id="card-pl">
+      <h3>Pipeline</h3><div class="sub">at stabilization (20 Turner, 49 Drummond)</div>
+      <div class="kgrid">
+        <div class="k"><div class="n" id="pl-noi"></div><div class="l">NOI / yr</div></div>
+        <div class="k"><div class="n" id="pl-cfbt"></div><div class="l">Cash flow / yr</div></div>
+        <div class="k"><div class="n" id="pl-cfmo"></div><div class="l">Cash flow / mo</div></div>
+        <div class="k"><div class="n" id="pl-dscr"></div><div class="l">DSCR</div></div>
+        <div class="k"><div class="n" id="pl-val"></div><div class="l">Value @ cap</div></div>
+        <div class="k"><div class="n" id="pl-eq"></div><div class="l">Equity (PFS)</div></div>
+      </div>
+    </div>
+    <div class="card combined">
+      <h3>Combined</h3><div class="sub">SP stabilized + pipeline, at stabilization</div>
+      <div class="kgrid">
+        <div class="k"><div class="n" id="cb-noi"></div><div class="l">NOI / yr</div></div>
+        <div class="k"><div class="n" id="cb-cfbt"></div><div class="l">Cash flow / yr</div></div>
+        <div class="k"><div class="n" id="cb-units"></div><div class="l">Units</div></div>
+        <div class="k"><div class="n" id="cb-dscr"></div><div class="l">DSCR</div></div>
+        <div class="k"><div class="n" id="cb-val"></div><div class="l">Value @ cap</div></div>
+        <div class="k"><div class="n" id="cb-eq"></div><div class="l">Equity (PFS)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect"><h2>SP Stabilized Portfolio</h2><span id="sp-units-note"></span></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Property</th><th>Occ.</th><th>Rent/mo</th><th>EGI</th>
+        <th><span class="editable-hint"></span>OpEx</th><th>NOI</th>
+        <th><span class="editable-hint"></span>Debt svc</th><th>CFBT/yr</th><th>CFBT/mo</th><th>DSCR</th><th>Value@cap</th>
+      </tr></thead>
+      <tbody id="tbody-sp"></tbody>
+      <tbody id="tfoot-sp"></tbody>
+    </table>
+  </div>
+
+  <div class="sect"><h2>Pipeline</h2><span>shown at stabilization — underwriting rents</span></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Property</th><th>Occ.</th><th>Rent/mo</th><th>EGI</th>
+        <th><span class="editable-hint"></span>OpEx</th><th>NOI</th>
+        <th><span class="editable-hint"></span>Debt svc</th><th>CFBT/yr</th><th>CFBT/mo</th><th>DSCR</th><th>Value@cap</th>
+      </tr></thead>
+      <tbody id="tbody-pl"></tbody>
+      <tbody id="tfoot-pl"></tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span><span class="editable-hint"></span><b>Shaded fields</b> are editable — change a rent, OpEx, or debt-service figure and everything recalculates.</span>
+    <span><b>Click a property row</b> to toggle individual unit occupancy &amp; rents.</span>
+  </div>
+
+  <footer>
+    <b>Notes.</b> Value @ cap = NOI ÷ cap rate (income approach). DSCR = NOI ÷ annual debt service. Equity = market value (PFS) − debt balance.
+    Vacancy here is explicit per unit (occupancy toggles) plus the credit-loss slider on occupied rent — the headline workbook uses a flat 8% on full occupancy.
+    4 Oxford is modeled <b>inside Standard Properties at $3,400/mo with no debt</b> to start (per Brett, 2026-06). 39 High is pending sale / 1031 — its debt clears at close.
+    Source of record: <code>Standard Properties LLC/Pro Forma/SMC_Portfolio_ProForma.xlsx</code>.
+  </footer>
+</div>
+
+<script>
+const fmt0 = n => (n<0?'-':'')+'$'+Math.abs(Math.round(n)).toLocaleString();
+const fmtX = n => n===null?'n/a':n.toFixed(2)+'x';
+
+// ---- baseline data (rents = AppFolio roll; OpEx = QBO TTM; debt/value = PFS) ----
+const BASE = [
+ {name:'2 Lawrence St', g:'sp', note:'2 mortgages (MSCU) · ~0.26x DSCR watch', uc:2, opex:23147, ds:19504, value:260000, debt:213056,
+   units:[{t:'Unit 1',r:1350,o:1},{t:'Unit 2',r:1200,o:1}]},
+ {name:'39 High St', g:'sp', note:'Pending sale $465K / 1031 — debt clears at close', uc:5, opex:18612, ds:26359, value:450000, debt:288704,
+   units:[{t:'Unit 1 (notice 6/7)',r:700,o:1},{t:'Unit 2',r:1200,o:1},{t:'Unit 3 (notice 6/15)',r:1350,o:1},{t:'Unit 4',r:550,o:1},{t:'Unit 5 (vacant — $950 mkt est)',r:950,o:0}]},
+ {name:'6-8 Silver Terrace', g:'sp', note:'', uc:6, opex:34538, ds:16440, value:500000, debt:141175,
+   units:[{t:'Unit 1',r:784,o:1},{t:'Unit 2',r:900,o:1},{t:'Unit 3',r:1350,o:1},{t:'Unit 4',r:1200,o:1},{t:'Unit 5',r:1200,o:1},{t:'Unit 6',r:1550,o:1}]},
+ {name:'6 Highland Park', g:'sp', note:'Reno by owner', uc:1, opex:6690, ds:15600, value:263000, debt:197970,
+   units:[{t:'House',r:2300,o:1}]},
+ {name:'15 Elmhurst', g:'sp', note:'Rent is an assumption (leased, not moved in)', uc:1, opex:13871, ds:19200, value:280000, debt:208645,
+   units:[{t:'House (rent assumed)',r:1800,o:1}]},
+ {name:'8-10 S Grove St', g:'sp', note:'Etzel seller note', uc:2, opex:13001, ds:6828, value:245000, debt:50991,
+   units:[{t:'8 S Grove',r:1300,o:1},{t:'10 S Grove',r:925,o:1}]},
+ {name:'13 S Grove St', g:'sp', note:'Etzel seller note', uc:2, opex:9572, ds:6828, value:245000, debt:50991,
+   units:[{t:'Unit 1',r:1250,o:1},{t:'Unit 2',r:1400,o:1}]},
+ {name:'4 Oxford St', g:'sp', note:'Moving into SP — no debt to start', uc:2, opex:7320, ds:0, value:275000, debt:0, isNew:true,
+   units:[{t:'Unit 1',r:1700,o:1},{t:'Unit 2',r:1700,o:1}]},
+ {name:'20 Turner', g:'pl', note:'Django LLC (50/50 w/ Joe Bard) — Brett\'s share 50%', uc:6, opex:28560, ds:16398, value:375000, debt:175208,
+   units:[{t:'6 units (quad in-place + duplex underwritten)',r:7305,o:1}]},
+ {name:'49 Drummond', g:'pl', note:'Under construction — $495K MSCU loan target Jul-26', uc:4, opex:17040, ds:44283, value:660000, debt:495000,
+   units:[{t:'Unit 1',r:1600,o:1},{t:'Unit 2',r:1600,o:1},{t:'Unit 3',r:1600,o:1},{t:'Unit 4',r:1600,o:1}]},
+];
+// deep clone for reset
+const clone = d => JSON.parse(JSON.stringify(d));
+let DATA = clone(BASE);
+
+function buildRows(group){
+  const tb = document.getElementById('tbody-'+group);
+  tb.innerHTML='';
+  DATA.forEach((p,pi)=>{
+    if(p.g!==group) return;
+    const tr=document.createElement('tr');
+    tr.className='prow'; tr.dataset.pi=pi;
+    tr.innerHTML=`
+      <td><span class="pname"><span class="caret">▶</span>${p.name} ${p.isNew?'<span class="new-badge">→ SP</span>':''}</span><span class="pnote">${p.note||''}</span></td>
+      <td id="occ-${pi}"></td>
+      <td id="rentmo-${pi}"></td>
+      <td id="egi-${pi}"></td>
+      <td><input type="number" id="opex-${pi}" value="${p.opex}" step="100"></td>
+      <td id="noi-${pi}"></td>
+      <td><input type="number" id="ds-${pi}" value="${p.ds}" step="100"></td>
+      <td id="cfbt-${pi}"></td>
+      <td id="cfmo-${pi}"></td>
+      <td id="dscr-${pi}"></td>
+      <td id="vcap-${pi}"></td>`;
+    tb.appendChild(tr);
+
+    const ur=document.createElement('tr');
+    ur.className='units-row'; ur.style.display='none'; ur.id='units-'+pi;
+    let uh = `<div class="units-inner"><div class="uh">Units — toggle occupancy, edit market rent</div>`;
+    p.units.forEach((u,ui)=>{
+      uh += `<div class="unit ${u.o?'':'vac'}" id="unit-${pi}-${ui}">
+        <input type="checkbox" id="o-${pi}-${ui}" ${u.o?'checked':''}>
+        <span class="tn">${u.t}</span>
+        <input type="number" id="r-${pi}-${ui}" value="${u.r}" step="25">
+      </div>`;
+    });
+    uh+=`</div>`;
+    ur.innerHTML=`<td colspan="11">${uh}</td>`;
+    tb.appendChild(ur);
+
+    tr.addEventListener('click',e=>{
+      if(e.target.tagName==='INPUT') return;
+      const open=ur.style.display==='none';
+      ur.style.display=open?'table-row':'none';
+      tr.classList.toggle('open',open);
+    });
+  });
+}
+
+function compute(p,pi){
+  const cap=parseFloat(document.getElementById('cap').value);
+  const vac=parseFloat(document.getElementById('vac').value);
+  let gpr=0, occRent=0;
+  p.units.forEach((u,ui)=>{
+    const r=parseFloat(document.getElementById('r-'+pi+'-'+ui).value)||0;
+    const o=document.getElementById('o-'+pi+'-'+ui).checked;
+    gpr+=r*12;
+    if(o) occRent+=r*12;
+    const ucell=document.getElementById('unit-'+pi+'-'+ui);
+    if(ucell) ucell.classList.toggle('vac',!o);
+  });
+  const egi=occRent*(1-vac);
+  const opex=parseFloat(document.getElementById('opex-'+pi).value)||0;
+  const ds=parseFloat(document.getElementById('ds-'+pi).value)||0;
+  const noi=egi-opex;
+  const cfbt=noi-ds;
+  const vcap=cap>0?noi/cap:0;
+  const dscr=ds>0?noi/ds:null;
+  const occUnits=p.units.filter((u,ui)=>document.getElementById('o-'+pi+'-'+ui).checked).length;
+  return {gpr,egi,opex,ds,noi,cfbt,vcap,dscr,occUnits,monthlyRent:occRent/12,value:p.value,debt:p.debt,uc:p.uc};
+}
+
+function setText(id,txt,cls){const el=document.getElementById(id);if(!el)return;el.textContent=txt;if(cls!==undefined){el.className=cls;}}
+
+function recompute(){
+  setText('capV',(parseFloat(cap.value)*100).toFixed(2)+'%');
+  setText('vacV',(parseFloat(vac.value)*100).toFixed(1)+'%');
+  const agg={sp:blank(),pl:blank()};
+  function blank(){return {noi:0,cfbt:0,egi:0,ds:0,vcap:0,eq:0,units:0};}
+  DATA.forEach((p,pi)=>{
+    const c=compute(p,pi);
+    setText('occ-'+pi, c.occUnits+'/'+c.uc);
+    setText('rentmo-'+pi, fmt0(c.monthlyRent));
+    setText('egi-'+pi, fmt0(c.egi));
+    setText('noi-'+pi, fmt0(c.noi));
+    setText('cfbt-'+pi, fmt0(c.cfbt), c.cfbt<0?'neg':'pos');
+    setText('cfmo-'+pi, fmt0(c.cfbt/12), c.cfbt<0?'neg':'pos');
+    const dcell=document.getElementById('dscr-'+pi);
+    if(dcell){dcell.textContent=fmtX(c.dscr);dcell.className=c.dscr===null?'':(c.dscr>=1.2?'dscr-ok':'dscr-bad');}
+    setText('vcap-'+pi, fmt0(c.vcap));
+    const a=agg[p.g];
+    a.noi+=c.noi;a.cfbt+=c.cfbt;a.egi+=c.egi;a.ds+=c.ds;a.vcap+=c.vcap;a.eq+=(c.value-c.debt);a.units+=c.uc;
+  });
+  ['sp','pl'].forEach(g=>renderFoot(g,agg[g]));
+  // cards
+  fillCard('sp',agg.sp); fillCard('pl',agg.pl);
+  const cb={noi:agg.sp.noi+agg.pl.noi,cfbt:agg.sp.cfbt+agg.pl.cfbt,ds:agg.sp.ds+agg.pl.ds,
+            vcap:agg.sp.vcap+agg.pl.vcap,eq:agg.sp.eq+agg.pl.eq,units:agg.sp.units+agg.pl.units};
+  setText('cb-noi',fmt0(cb.noi)); setText('cb-cfbt',fmt0(cb.cfbt),'n '+(cb.cfbt<0?'neg':'pos'));
+  setText('cb-units',cb.units); setText('cb-dscr',fmtX(cb.ds>0?cb.noi/cb.ds:null));
+  setText('cb-val',fmt0(cb.vcap)); setText('cb-eq',fmt0(cb.eq));
+  document.getElementById('cb-cfbt').className='n '+(cb.cfbt<0?'neg':'pos');
+  setText('sp-units-note', agg.sp.units+' units · '+DATA.filter(p=>p.g==='sp').length+' properties (incl. 4 Oxford)');
+}
+
+function fillCard(g,a){
+  setText(g+'-noi',fmt0(a.noi));
+  const cf=document.getElementById(g+'-cfbt'); cf.textContent=fmt0(a.cfbt); cf.className='n '+(a.cfbt<0?'neg':'pos');
+  const cm=document.getElementById(g+'-cfmo'); if(cm){cm.textContent=fmt0(a.cfbt/12); cm.className='n '+(a.cfbt<0?'neg':'pos');}
+  setText(g+'-dscr',fmtX(a.ds>0?a.noi/a.ds:null));
+  setText(g+'-val',fmt0(a.vcap)); setText(g+'-eq',fmt0(a.eq));
+}
+
+function renderFoot(group,a){
+  const tf=document.getElementById('tfoot-'+group);
+  const label=group==='sp'?'SP STABILIZED — TOTAL':'PIPELINE — TOTAL';
+  tf.innerHTML=`<tr class="trow">
+    <td>${label}</td><td>${a.units} units</td><td></td>
+    <td>${fmt0(a.egi)}</td><td></td><td>${fmt0(a.noi)}</td>
+    <td>${fmt0(a.ds)}</td><td class="${a.cfbt<0?'neg':'pos'}">${fmt0(a.cfbt)}</td>
+    <td class="${a.cfbt<0?'neg':'pos'}">${fmt0(a.cfbt/12)}</td>
+    <td>${fmtX(a.ds>0?a.noi/a.ds:null)}</td><td>${fmt0(a.vcap)}</td></tr>`;
+}
+
+// ---- wire up ----
+function init(){
+  buildRows('sp'); buildRows('pl');
+  document.body.addEventListener('input',e=>{
+    if(e.target.matches('input')) recompute();
+  });
+  document.getElementById('cap').addEventListener('input',recompute);
+  document.getElementById('vac').addEventListener('input',recompute);
+  document.getElementById('reset').addEventListener('click',()=>{
+    DATA=clone(BASE);
+    document.getElementById('cap').value=0.08;
+    document.getElementById('vac').value=0.03;
+    buildRows('sp'); buildRows('pl'); recompute();
+  });
+  let expanded=false;
+  document.getElementById('toggleAll').addEventListener('click',ev=>{
+    expanded=!expanded;
+    document.querySelectorAll('.units-row').forEach(r=>r.style.display=expanded?'table-row':'none');
+    document.querySelectorAll('.prow').forEach(r=>r.classList.toggle('open',expanded));
+    ev.target.textContent=expanded?'Collapse all units':'Expand all units';
+  });
+  recompute();
+}
+init();
+</script>
+</body>
+</html>
