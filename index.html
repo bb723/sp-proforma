@@ -95,6 +95,26 @@
 
   table.debt td.l{text-align:left;}
   table.debt tr.personal td{color:var(--muted);font-style:italic;background:#faf7f0;}
+  .month-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:12px;}
+  .month-controls label{font-family:var(--head);font-weight:600;font-size:.82rem;color:var(--pine);}
+  .month-controls input[type=range]{accent-color:var(--mint);width:170px;}
+  .month-controls .val{font-family:var(--head);font-weight:600;min-width:40px;}
+  .month-controls .mc-note{font-size:.76rem;color:var(--muted);flex:1;min-width:200px;}
+  .mchart{display:flex;gap:5px;height:118px;margin-bottom:18px;align-items:flex-end;}
+  .mcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}
+  .barwrap{position:relative;width:100%;height:96px;}
+  .barwrap:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--line);}
+  .bar{position:absolute;left:22%;width:56%;border-radius:3px 3px 0 0;}
+  .bar.pos{bottom:50%;background:var(--mint);}
+  .bar.neg{top:50%;background:var(--neg);border-radius:0 0 3px 3px;}
+  .mlbl{font-size:.7rem;color:var(--muted);margin-top:5px;}
+  table.month{width:100%;border-collapse:collapse;font-size:.8rem;min-width:780px;}
+  table.month th,table.month td{padding:7px 8px;text-align:right;white-space:nowrap;border-top:1px solid var(--line);}
+  table.month th:first-child,table.month td:first-child{text-align:left;font-weight:500;}
+  table.month thead th{background:var(--pine);color:var(--cream);font-family:var(--head);font-weight:500;font-size:.72rem;border:none;}
+  table.month tr.em td{font-weight:700;background:#eef4ee;}
+  table.month td.neg{color:var(--neg);}
+  table.month td.warm{color:var(--pos);font-weight:600;}
   .legend{margin:14px 2px 40px;font-size:.78rem;color:var(--muted);display:flex;gap:20px;flex-wrap:wrap;}
   .legend b{color:var(--pine);}
   footer{padding:30px 0 50px;color:var(--muted);font-size:.78rem;}
@@ -123,7 +143,7 @@
       <div class="row"><input id="cap" type="range" min="0.05" max="0.10" step="0.0025" value="0.08"/><span class="val" id="capV">8.00%</span></div>
     </div>
     <div class="ctrl">
-      <label>Expense ratio (OpEx ÷ EGI)</label>
+      <label>Expense ratio (% of gross rent, fixed)</label>
       <div class="row"><input id="exp" type="range" min="0.20" max="0.60" step="0.01" value="0.40"/><span class="val" id="expV">40%</span></div>
     </div>
     <div class="ctrl">
@@ -204,6 +224,18 @@
     <span><b>Click a property</b> to toggle unit occupancy &amp; edit rents.</span>
   </div>
 
+  <div class="sect"><h2>Month-over-Month — SP Stabilized</h2><span>rent holds flat; OpEx is seasonalized, so the expense ratio dips in summer (no fuel) and spikes in winter</span></div>
+  <div class="month-controls">
+    <label>Fuel / heat seasonal share of OpEx</label>
+    <input id="seas" type="range" min="0" max="0.6" step="0.05" value="0.25">
+    <span class="val" id="seasV">25%</span>
+    <span class="mc-note">How much of OpEx is winter fuel — higher = bigger summer-vs-winter swing. Toggle a unit vacant and rent backs out, but expenses stay fixed.</span>
+  </div>
+  <div class="tbl-wrap" style="padding:18px;">
+    <div id="mchart" class="mchart"></div>
+    <div style="overflow-x:auto;"><table class="month" id="mtable"></table></div>
+  </div>
+
   <div class="sect"><h2>Debt Schedule</h2><span>every loan across the portfolio — balances, rate, monthly P&amp;I, maturity</span></div>
   <div class="tbl-wrap">
     <table class="debt">
@@ -236,7 +268,7 @@
 
   <footer>
     <b>Notes.</b> All operating lines are <b>monthly</b>. Value @ cap = annual NOI ÷ cap rate. DSCR = NOI ÷ debt service. Equity = market value (PFS) − debt.
-    OpEx is now modeled as a flat <b>expense ratio of EGI</b> (default 40%) instead of the inconsistent TTM actuals — the old per-property actuals ranged from ~25% to ~78% and 39 High had $0 insurance booked, so NOI was unreliable.
+    OpEx = <b>expense ratio × gross potential rent, held fixed regardless of occupancy</b> — so a vacancy backs out the rent but not the expenses (taxes, insurance, heat, mgmt don't disappear when a unit empties). The <b>Month-over-Month</b> view seasonalizes that OpEx — fuel/heat lands in winter — so the monthly expense ratio dips in summer and spikes in winter (annual still ties to the ratio).
     <b>4 Oxford</b> is inside Standard Properties at $3,400/mo with <b>no debt</b> to start. <b>20 Turner</b> is Django LLC (50/50 w/ Joe Bard) — shown at 100% in the pipeline, so Brett's economic share of its equity/NOI is half.
     39 High is now held long-term (sale cancelled). 20 Turner carries an added $252K refi (25-yr) and is valued at the $550K comp; 49 Drummond debt amortizes over 25 years. Source of record: <code>Standard Properties LLC/Pro Forma/SMC_Portfolio_ProForma.xlsx</code>.
   </footer>
@@ -330,7 +362,7 @@ function compute(p,pi){
     if(ucell) ucell.classList.toggle('vac',!o);
   });
   const egi=occRent*(1-vac);
-  const opex=egi*exp;
+  const opex=gpr*exp;                  // tied to gross POTENTIAL rent → expenses stay fixed when a unit goes vacant
   const ds=p.ds;                       // locked
   const noi=egi-opex;
   const cfbt=noi-ds;
@@ -345,6 +377,7 @@ function recompute(){
   setText('capV',(parseFloat(cap.value)*100).toFixed(2)+'%');
   setText('expV',Math.round(parseFloat(exp.value)*100)+'%');
   setText('vacV',(parseFloat(vac.value)*100).toFixed(1)+'%');
+  setText('seasV',Math.round(parseFloat(document.getElementById('seas').value)*100)+'%');
   const agg={sp:blank(),pl:blank()};
   function blank(){return {noi:0,cfbt:0,egi:0,opex:0,ds:0,vcap:0,eq:0,units:0,rent:0};}
   DATA.forEach((p,pi)=>{
@@ -366,6 +399,7 @@ function recompute(){
   });
   ['sp','pl'].forEach(g=>renderFoot(g,agg[g]));
   fillCard('sp',agg.sp); fillCard('pl',agg.pl);
+  renderMonthly(agg.sp);
   const cb={noi:agg.sp.noi+agg.pl.noi,cfbt:agg.sp.cfbt+agg.pl.cfbt,ds:agg.sp.ds+agg.pl.ds,
             vcap:agg.sp.vcap+agg.pl.vcap,eq:agg.sp.eq+agg.pl.eq,units:agg.sp.units+agg.pl.units};
   setText('cb-noimo',fmt0(cb.noi/12));
@@ -393,6 +427,38 @@ function renderFoot(group,a){
     <td>${fmtX(a.ds>0?a.noi/a.ds:null)}</td><td>${fmt0(a.vcap)}</td></tr>`;
 }
 
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const HEATW=[0.16,0.15,0.12,0.08,0.03,0.01,0.01,0.01,0.03,0.09,0.14,0.17];
+function renderMonthly(a){
+  const seas=parseFloat(document.getElementById('seas').value);
+  const rentM=a.egi/12, dsM=a.ds/12, opexA=a.opex;
+  const opexM=[],noiM=[],cfM=[],cum=[],ratM=[]; let c=0;
+  for(let m=0;m<12;m++){
+    const w=seas*HEATW[m]+(1-seas)/12;
+    const ox=opexA*w, noi=rentM-ox, cf=noi-dsM;
+    c+=cf;
+    opexM.push(ox);noiM.push(noi);cfM.push(cf);cum.push(c);ratM.push(rentM>0?ox/rentM:0);
+  }
+  const maxAbs=Math.max(1,...cfM.map(v=>Math.abs(v)));
+  document.getElementById('mchart').innerHTML=MONTHS.map((mn,i)=>{
+    const v=cfM[i], h=Math.abs(v)/maxAbs*44;
+    const bar=v>=0?`<div class="bar pos" style="height:${h}px"></div>`:`<div class="bar neg" style="height:${h}px"></div>`;
+    return `<div class="mcol" title="${mn}: ${fmt0(v)}/mo cash flow"><div class="barwrap">${bar}</div><div class="mlbl">${mn}</div></div>`;
+  }).join('');
+  const sum=arr=>arr.reduce((s,x)=>s+x,0);
+  const cells=(arr,f,cf)=>arr.map(v=>`<td class="${cf?cf(v):''}">${f(v)}</td>`).join('');
+  const money=v=>fmt0(v), pct=v=>(v*100).toFixed(0)+'%', negc=v=>v<0?'neg':'';
+  let h=`<thead><tr><th>SP Stabilized / mo</th>${MONTHS.map(m=>`<th>${m}</th>`).join('')}<th>Year</th></tr></thead><tbody>`;
+  h+=`<tr><td>Effective rent</td>${MONTHS.map(()=>`<td>${money(rentM)}</td>`).join('')}<td>${money(rentM*12)}</td></tr>`;
+  h+=`<tr><td>Operating expenses</td>${cells(opexM,money)}<td>${money(sum(opexM))}</td></tr>`;
+  h+=`<tr><td>NOI</td>${cells(noiM,money,negc)}<td>${money(sum(noiM))}</td></tr>`;
+  h+=`<tr><td>Debt service</td>${MONTHS.map(()=>`<td>${money(dsM)}</td>`).join('')}<td>${money(dsM*12)}</td></tr>`;
+  h+=`<tr class="em"><td>Cash flow</td>${cells(cfM,money,negc)}<td class="${sum(cfM)<0?'neg':''}">${money(sum(cfM))}</td></tr>`;
+  h+=`<tr><td>Cumulative cash</td>${cells(cum,money,negc)}<td></td></tr>`;
+  h+=`<tr><td>Expense ratio</td>${cells(ratM,pct,v=>v<0.40?'warm':'')}<td>${pct(sum(opexM)/(rentM*12||1))}</td></tr>`;
+  h+=`</tbody>`;
+  document.getElementById('mtable').innerHTML=h;
+}
 function init(){
   buildRows('sp'); buildRows('pl');
   document.body.addEventListener('input',e=>{ if(e.target.matches('input')) recompute(); });
@@ -402,6 +468,7 @@ function init(){
     document.getElementById('cap').value=0.08;
     document.getElementById('exp').value=0.40;
     document.getElementById('vac').value=0.03;
+    document.getElementById('seas').value=0.25;
     buildRows('sp'); buildRows('pl'); recompute();
   });
   let expanded=false;
